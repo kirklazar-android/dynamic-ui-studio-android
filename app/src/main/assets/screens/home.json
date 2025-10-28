@@ -1,0 +1,40 @@
+{
+  "screenId": "home",
+  "version": 1,
+  "metadata": {
+    "analyticsScreenName": "dynamic_home",
+    "experimentId": "home_v1"
+  },
+  "components": [
+    {
+      "id": "hero_1",
+      "type": "hero_banner",
+      "title": "Welcome Back",
+      "subtitle": "Your dashboard is rendered from a local JSON contract.",
+      "action": {
+        "type": "snackbar",
+        "message": "Hero action clicked"
+      }
+    },
+    {
+      "id": "text_1",
+      "type": "text",
+      "value": "This screen is composed at runtime using DynamicUI Studio models.",
+      "style": "body"
+    },
+    {
+      "id": "button_1",
+      "type": "button",
+      "text": "Continue",
+      "action": {
+        "type": "snackbar",
+        "message": "CTA clicked"
+      }
+    },
+    {
+      "id": "future_component_1",
+      "type": "progress_card",
+      "title": "Unsupported component fallback"
+    }
+  ]
+}

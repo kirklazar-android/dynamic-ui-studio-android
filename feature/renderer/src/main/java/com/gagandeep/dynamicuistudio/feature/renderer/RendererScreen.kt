@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -35,17 +36,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.ButtonComponent
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.ButtonWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.CardWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.DividerWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicAction
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicComponent
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicScreen
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.HeroBannerComponent
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.SnackbarAction
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.TextComponent
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicScreenSchema
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.ListWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.ShowSnackbarAction
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.SpacerWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.TextStyleToken
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.UnknownComponent
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.TextWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.UiWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.UnknownWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.parser.DynamicJsonParser
 import com.gagandeep.dynamicuistudio.core.dynamicui.validation.DynamicScreenValidator
+import com.gagandeep.dynamicuistudio.core.dynamicui.validation.ValidationResult
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,10 +76,10 @@ fun RendererScreen(
                 message = uiState.errorMessage.orEmpty(),
                 modifier = Modifier.padding(innerPadding)
             )
-            uiState.screen != null -> DynamicScreenRenderer(
-                screen = requireNotNull(uiState.screen),
+            uiState.schema != null -> DynamicScreenRenderer(
+                schema = requireNotNull(uiState.schema),
                 onAction = { action ->
-                    if (action is SnackbarAction) {
+                    if (action is ShowSnackbarAction) {
                         scope.launch {
                             snackbarHostState.showSnackbar(action.message)
                         }
@@ -88,24 +93,24 @@ fun RendererScreen(
 
 @Composable
 fun DynamicScreenRenderer(
-    screen: DynamicScreen,
+    schema: DynamicScreenSchema,
     onAction: (DynamicAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
+        contentPadding = PaddingValues(schema.layout.padding.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "header") {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "DynamicUI Studio",
+                    text = schema.title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = screen.metadata?.experimentId ?: screen.screenId,
+                    text = schema.analytics?.screenView ?: schema.screenId,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -113,11 +118,11 @@ fun DynamicScreenRenderer(
         }
 
         items(
-            items = screen.components,
+            items = schema.layout.widgets,
             key = { it.id }
-        ) { component ->
-            DynamicComponentRenderer(
-                component = component,
+        ) { widget ->
+            DynamicWidgetView(
+                widget = widget,
                 onAction = onAction
             )
         }
@@ -125,23 +130,27 @@ fun DynamicScreenRenderer(
 }
 
 @Composable
-private fun DynamicComponentRenderer(
-    component: DynamicComponent,
+private fun DynamicWidgetView(
+    widget: UiWidget,
     onAction: (DynamicAction) -> Unit
 ) {
-    when (component) {
-        is TextComponent -> TextComponentView(component)
-        is HeroBannerComponent -> HeroBannerComponentView(component, onAction)
-        is ButtonComponent -> ButtonComponentView(component, onAction)
-        is UnknownComponent -> UnknownComponentView(component)
+    when (widget) {
+        is TextWidget -> TextWidgetView(widget)
+        is ButtonWidget -> ButtonWidgetView(widget, onAction)
+        is CardWidget -> CardWidgetView(widget, onAction)
+        is ListWidget -> ListWidgetView(widget)
+        is SpacerWidget -> Spacer(Modifier.height(widget.height.dp))
+        is DividerWidget -> HorizontalDivider()
+        is UnknownWidget -> UnknownWidgetView(widget)
     }
 }
 
 @Composable
-private fun TextComponentView(component: TextComponent) {
+private fun TextWidgetView(widget: TextWidget) {
     Text(
-        text = component.value,
-        style = when (component.style) {
+        text = widget.text,
+        style = when (widget.style) {
+            TextStyleToken.Headline -> MaterialTheme.typography.headlineMedium
             TextStyleToken.Title -> MaterialTheme.typography.titleLarge
             TextStyleToken.Body -> MaterialTheme.typography.bodyLarge
             TextStyleToken.Caption -> MaterialTheme.typography.labelLarge
@@ -150,8 +159,21 @@ private fun TextComponentView(component: TextComponent) {
 }
 
 @Composable
-private fun HeroBannerComponentView(
-    component: HeroBannerComponent,
+private fun ButtonWidgetView(
+    widget: ButtonWidget,
+    onAction: (DynamicAction) -> Unit
+) {
+    Button(
+        onClick = { widget.action?.let(onAction) },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(widget.text)
+    }
+}
+
+@Composable
+private fun CardWidgetView(
+    widget: CardWidget,
     onAction: (DynamicAction) -> Unit
 ) {
     Card(
@@ -166,42 +188,27 @@ private fun HeroBannerComponentView(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = component.title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-            component.subtitle?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-            component.action?.let { action ->
-                Spacer(Modifier.height(4.dp))
-                Button(onClick = { onAction(action) }) {
-                    Text("View details")
-                }
+            widget.children.forEach { child ->
+                DynamicWidgetView(child, onAction)
             }
         }
     }
 }
 
 @Composable
-private fun ButtonComponentView(
-    component: ButtonComponent,
-    onAction: (DynamicAction) -> Unit
-) {
-    Button(
-        onClick = { component.action?.let(onAction) },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(component.text)
+private fun ListWidgetView(widget: ListWidget) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        widget.items.forEach { item ->
+            Text(
+                text = "- $item",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     }
 }
 
 @Composable
-private fun UnknownComponentView(component: UnknownComponent) {
+private fun UnknownWidgetView(widget: UnknownWidget) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -212,7 +219,7 @@ private fun UnknownComponentView(component: UnknownComponent) {
             .padding(14.dp)
     ) {
         Text(
-            text = "Unsupported component: ${component.type}",
+            text = "Unsupported widget: ${widget.type}",
             color = MaterialTheme.colorScheme.onErrorContainer,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -249,7 +256,7 @@ private fun ErrorState(
 
 private data class RendererUiState(
     val isLoading: Boolean = false,
-    val screen: DynamicScreen? = null,
+    val schema: DynamicScreenSchema? = null,
     val errorMessage: String? = null
 )
 
@@ -260,13 +267,13 @@ private fun loadRendererState(context: Context): RendererUiState {
         .bufferedReader()
         .use { it.readText() }
 
-    val screen = parser.parse(rawJson).getOrElse { error ->
+    val schema = parser.parse(rawJson).getOrElse { error ->
         return RendererUiState(errorMessage = error.message ?: "Unable to parse dynamic screen")
     }
-    val validationErrors = validator.validate(screen)
-    return if (validationErrors.isEmpty()) {
-        RendererUiState(screen = screen)
-    } else {
-        RendererUiState(errorMessage = validationErrors.joinToString())
+    return when (val validation = validator.validate(schema)) {
+        ValidationResult.Valid -> RendererUiState(schema = schema)
+        is ValidationResult.Invalid -> RendererUiState(
+            errorMessage = validation.errors.joinToString { "${it.path}: ${it.message}" }
+        )
     }
 }

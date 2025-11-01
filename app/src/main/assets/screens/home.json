@@ -1,40 +1,63 @@
 {
-  "screenId": "home",
+  "screenId": "credit_card_onboarding",
+  "title": "Credit Card Onboarding",
   "version": 1,
-  "metadata": {
-    "analyticsScreenName": "dynamic_home",
-    "experimentId": "home_v1"
+  "analytics": {
+    "screenView": "cc_onboarding_viewed"
   },
-  "components": [
-    {
-      "id": "hero_1",
-      "type": "hero_banner",
-      "title": "Welcome Back",
-      "subtitle": "Your dashboard is rendered from a local JSON contract.",
-      "action": {
-        "type": "snackbar",
-        "message": "Hero action clicked"
+  "layout": {
+    "type": "vertical",
+    "padding": 20,
+    "widgets": [
+      {
+        "id": "hero_title",
+        "type": "text",
+        "text": "Get your new credit card in minutes",
+        "style": "headlineLarge"
+      },
+      {
+        "id": "hero_card",
+        "type": "card",
+        "children": [
+          {
+            "id": "hero_subtitle",
+            "type": "text",
+            "text": "This screen is rendered from a JSON schema at runtime.",
+            "style": "body"
+          },
+          {
+            "id": "eligibility_title",
+            "type": "text",
+            "text": "Eligibility",
+            "style": "title"
+          },
+          {
+            "id": "eligibility_list",
+            "type": "list",
+            "items": [
+              "Age above 21",
+              "Valid PAN card",
+              "Stable monthly income"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_1",
+        "type": "divider"
+      },
+      {
+        "id": "apply_cta",
+        "type": "button",
+        "text": "Apply Now",
+        "analytics": {
+          "click": "cc_apply_clicked"
+        },
+        "action": {
+          "type": "show_snackbar",
+          "message": "Application flow will be connected next"
+        }
       }
-    },
-    {
-      "id": "text_1",
-      "type": "text",
-      "value": "This screen is composed at runtime using DynamicUI Studio models.",
-      "style": "body"
-    },
-    {
-      "id": "button_1",
-      "type": "button",
-      "text": "Continue",
-      "action": {
-        "type": "snackbar",
-        "message": "CTA clicked"
-      }
-    },
-    {
-      "id": "future_component_1",
-      "type": "progress_card",
-      "title": "Unsupported component fallback"
-    }
-  ]
+    ]
+  }
 }

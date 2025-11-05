@@ -1,56 +1,36 @@
 package com.gagandeep.dynamicuistudio.feature.renderer
 
-import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.ButtonWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.CardWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.DividerWidget
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicAction
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicScreenSchema
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.ListWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.ShowSnackbarAction
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.SpacerWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.TextStyleToken
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.TextWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.UiWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.model.UnknownWidget
-import com.gagandeep.dynamicuistudio.core.dynamicui.parser.DynamicJsonParser
-import com.gagandeep.dynamicuistudio.core.dynamicui.validation.DynamicScreenValidator
-import com.gagandeep.dynamicuistudio.core.dynamicui.validation.ValidationResult
+import com.gagandeep.dynamicuistudio.feature.renderer.data.AssetDynamicSchemaSource
+import com.gagandeep.dynamicuistudio.feature.renderer.rendering.RenderContext
+import com.gagandeep.dynamicuistudio.feature.renderer.rendering.WidgetRendererRegistry
+import com.gagandeep.dynamicuistudio.feature.renderer.rendering.defaultWidgetRendererRegistry
 import kotlinx.coroutines.launch
 
 @Composable
@@ -58,33 +38,53 @@ fun RendererScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val viewModel: RendererViewModel = viewModel(
+        factory = remember(context) {
+            RendererViewModelFactory(
+                schemaSource = AssetDynamicSchemaSource(context.assets)
+            )
+        }
+    )
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var uiState by remember { mutableStateOf(RendererUiState(isLoading = true)) }
 
-    LaunchedEffect(Unit) {
-        uiState = loadRendererState(context)
-    }
+    RendererContent(
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
+        onAction = { action ->
+            viewModel.recordAction(action)
+            if (action is ShowSnackbarAction) {
+                scope.launch {
+                    snackbarHostState.showSnackbar(action.message)
+                }
+            }
+        },
+        modifier = modifier
+    )
+}
 
+@Composable
+private fun RendererContent(
+    uiState: RendererUiState,
+    snackbarHostState: SnackbarHostState,
+    onAction: (DynamicAction) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        when {
-            uiState.isLoading -> LoadingState(Modifier.padding(innerPadding))
-            uiState.errorMessage != null -> ErrorState(
-                message = uiState.errorMessage.orEmpty(),
+        when (uiState) {
+            RendererUiState.Loading -> LoadingState(Modifier.padding(innerPadding))
+            is RendererUiState.Error -> ErrorState(
+                state = uiState,
                 modifier = Modifier.padding(innerPadding)
             )
-            uiState.schema != null -> DynamicScreenRenderer(
-                schema = requireNotNull(uiState.schema),
-                onAction = { action ->
-                    if (action is ShowSnackbarAction) {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(action.message)
-                        }
-                    }
-                },
+            is RendererUiState.Success -> DynamicScreenRenderer(
+                schema = uiState.schema,
+                actionLogs = uiState.actionLogs,
+                onAction = onAction,
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -94,9 +94,14 @@ fun RendererScreen(
 @Composable
 fun DynamicScreenRenderer(
     schema: DynamicScreenSchema,
+    actionLogs: List<String>,
     onAction: (DynamicAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    registry: WidgetRendererRegistry = remember { defaultWidgetRendererRegistry() }
 ) {
+    val renderContext = remember(onAction) {
+        RenderContext(onAction = onAction)
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(schema.layout.padding.dp),
@@ -121,108 +126,35 @@ fun DynamicScreenRenderer(
             items = schema.layout.widgets,
             key = { it.id }
         ) { widget ->
-            DynamicWidgetView(
+            registry.RenderWidget(
                 widget = widget,
-                onAction = onAction
+                context = renderContext
             )
         }
-    }
-}
 
-@Composable
-private fun DynamicWidgetView(
-    widget: UiWidget,
-    onAction: (DynamicAction) -> Unit
-) {
-    when (widget) {
-        is TextWidget -> TextWidgetView(widget)
-        is ButtonWidget -> ButtonWidgetView(widget, onAction)
-        is CardWidget -> CardWidgetView(widget, onAction)
-        is ListWidget -> ListWidgetView(widget)
-        is SpacerWidget -> Spacer(Modifier.height(widget.height.dp))
-        is DividerWidget -> HorizontalDivider()
-        is UnknownWidget -> UnknownWidgetView(widget)
-    }
-}
-
-@Composable
-private fun TextWidgetView(widget: TextWidget) {
-    Text(
-        text = widget.text,
-        style = when (widget.style) {
-            TextStyleToken.Headline -> MaterialTheme.typography.headlineMedium
-            TextStyleToken.Title -> MaterialTheme.typography.titleLarge
-            TextStyleToken.Body -> MaterialTheme.typography.bodyLarge
-            TextStyleToken.Caption -> MaterialTheme.typography.labelLarge
-        }
-    )
-}
-
-@Composable
-private fun ButtonWidgetView(
-    widget: ButtonWidget,
-    onAction: (DynamicAction) -> Unit
-) {
-    Button(
-        onClick = { widget.action?.let(onAction) },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(widget.text)
-    }
-}
-
-@Composable
-private fun CardWidgetView(
-    widget: CardWidget,
-    onAction: (DynamicAction) -> Unit
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            widget.children.forEach { child ->
-                DynamicWidgetView(child, onAction)
+        if (actionLogs.isNotEmpty()) {
+            item(key = "action_logs") {
+                ActionLogPanel(actionLogs)
             }
         }
     }
 }
 
 @Composable
-private fun ListWidgetView(widget: ListWidget) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        widget.items.forEach { item ->
+private fun ActionLogPanel(actionLogs: List<String>) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = "Action Log",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        actionLogs.takeLast(3).forEach { log ->
             Text(
-                text = "- $item",
-                style = MaterialTheme.typography.bodyLarge
+                text = log,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-}
-
-@Composable
-private fun UnknownWidgetView(widget: UnknownWidget) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(14.dp)
-    ) {
-        Text(
-            text = "Unsupported widget: ${widget.type}",
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 
@@ -238,7 +170,7 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ErrorState(
-    message: String,
+    state: RendererUiState.Error,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -247,33 +179,19 @@ private fun ErrorState(
             .padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error
-        )
-    }
-}
-
-private data class RendererUiState(
-    val isLoading: Boolean = false,
-    val schema: DynamicScreenSchema? = null,
-    val errorMessage: String? = null
-)
-
-private fun loadRendererState(context: Context): RendererUiState {
-    val parser = DynamicJsonParser()
-    val validator = DynamicScreenValidator()
-    val rawJson = context.assets.open("screens/home.json")
-        .bufferedReader()
-        .use { it.readText() }
-
-    val schema = parser.parse(rawJson).getOrElse { error ->
-        return RendererUiState(errorMessage = error.message ?: "Unable to parse dynamic screen")
-    }
-    return when (val validation = validator.validate(schema)) {
-        ValidationResult.Valid -> RendererUiState(schema = schema)
-        is ValidationResult.Invalid -> RendererUiState(
-            errorMessage = validation.errors.joinToString { "${it.path}: ${it.message}" }
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = state.message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.titleMedium
+            )
+            state.validationErrors.forEach { error ->
+                Text(
+                    text = "${error.path}: ${error.message}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
     }
 }

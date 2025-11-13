@@ -1,0 +1,63 @@
+{
+  "screenId": "credit_card_onboarding",
+  "title": "Credit Card Onboarding",
+  "version": 1,
+  "analytics": {
+    "screenView": "cc_onboarding_viewed"
+  },
+  "layout": {
+    "type": "vertical",
+    "padding": 20,
+    "widgets": [
+      {
+        "id": "hero_title",
+        "type": "text",
+        "text": "Get your new credit card in minutes",
+        "style": "headlineLarge"
+      },
+      {
+        "id": "hero_card",
+        "type": "card",
+        "children": [
+          {
+            "id": "hero_subtitle",
+            "type": "text",
+            "text": "This screen is rendered from a JSON schema at runtime.",
+            "style": "body"
+          },
+          {
+            "id": "eligibility_title",
+            "type": "text",
+            "text": "Eligibility",
+            "style": "title"
+          },
+          {
+            "id": "eligibility_list",
+            "type": "list",
+            "items": [
+              "Age above 21",
+              "Valid PAN card",
+              "Stable monthly income"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_1",
+        "type": "divider"
+      },
+      {
+        "id": "apply_cta",
+        "type": "button",
+        "text": "Apply Now",
+        "analytics": {
+          "click": "cc_apply_clicked"
+        },
+        "action": {
+          "type": "show_snackbar",
+          "message": "Application flow will be connected next"
+        }
+      }
+    ]
+  }
+}

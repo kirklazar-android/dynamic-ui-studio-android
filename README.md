@@ -1,5 +1,9 @@
 # DynamicUI Studio
 
+[![Android CI](https://github.com/kirklazar-android/dynamic-ui-studio-android/actions/workflows/android-ci.yml/badge.svg)](https://github.com/kirklazar-android/dynamic-ui-studio-android/actions/workflows/android-ci.yml)
+![Kotlin](https://img.shields.io/badge/Kotlin-Android-blue)
+![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-green)
+
 DynamicUI Studio is a modular Android portfolio project that demonstrates backend-driven UI rendering with Kotlin and Jetpack Compose. Screens are described as JSON schemas, validated at runtime, and rendered through a widget registry instead of hardcoded screen layouts.
 
 ## Overview
@@ -246,7 +250,7 @@ On Windows:
 - [x] Widget renderer registry
 - [x] MVVM renderer screen
 - [x] Mock AI schema generator
-- [ ] GitHub Actions CI
+- [x] GitHub Actions CI
 - [ ] Screenshots and demo GIF
 - [ ] Analytics tracker abstraction
 - [ ] Dynamic action dispatcher

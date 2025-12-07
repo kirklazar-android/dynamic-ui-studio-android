@@ -262,7 +262,3 @@ On Windows:
 ## Why I Built This
 
 I built DynamicUI Studio to demonstrate how Android apps can support server-controlled UI rendering without requiring an app release for every layout or content change. The project focuses on schema-driven rendering, modular architecture, widget extensibility, validation, action handling, and production-style concerns such as caching, analytics, and fallback states.
-
-## Resume Summary
-
-Built a modular backend-driven UI renderer using Kotlin and Jetpack Compose, supporting JSON schema parsing, widget registry-based rendering, action handling, schema validation, mock AI schema generation, and unit-tested core modules.

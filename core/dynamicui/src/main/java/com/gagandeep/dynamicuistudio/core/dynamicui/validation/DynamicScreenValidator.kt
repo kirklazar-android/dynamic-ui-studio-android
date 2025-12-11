@@ -2,7 +2,9 @@ package com.gagandeep.dynamicuistudio.core.dynamicui.validation
 
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.ButtonWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.CardWidget
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicAction
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicScreenSchema
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.HeroBannerWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.ListWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.NavigateAction
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.OpenUrlAction
@@ -50,22 +52,12 @@ class DynamicScreenValidator {
             is ButtonWidget -> {
                 if (widget.text.isBlank()) add(ValidationError("$path.text", "button widget requires text"))
                 widget.action?.let { action ->
-                    when (action) {
-                        is NavigateAction -> if (action.destination.isBlank()) {
-                            add(ValidationError("$path.action.destination", "navigate action requires destination"))
-                        }
-                        is OpenUrlAction -> if (action.url.isBlank()) {
-                            add(ValidationError("$path.action.url", "open_url action requires url"))
-                        }
-                        is ShowSnackbarAction -> if (action.message.isBlank()) {
-                            add(ValidationError("$path.action.message", "show_snackbar action requires message"))
-                        }
-                        is TrackAnalyticsAction -> if (action.eventName.isBlank()) {
-                            add(ValidationError("$path.action.eventName", "track_analytics action requires eventName"))
-                        }
-                        is UnknownAction -> add(ValidationError("$path.action.type", action.reason))
-                    }
+                    validateAction(action, "$path.action")
                 }
+            }
+            is HeroBannerWidget -> {
+                if (widget.title.isBlank()) add(ValidationError("$path.title", "hero_banner widget requires title"))
+                widget.action?.let { action -> validateAction(action, "$path.action") }
             }
             is CardWidget -> {
                 if (widget.children.isEmpty()) add(ValidationError("$path.children", "card widget requires children"))
@@ -78,6 +70,27 @@ class DynamicScreenValidator {
             }
             is UnknownWidget -> add(ValidationError("$path.type", widget.reason))
             else -> Unit
+        }
+    }
+
+    private fun MutableList<ValidationError>.validateAction(
+        action: DynamicAction,
+        path: String
+    ) {
+        when (action) {
+            is NavigateAction -> if (action.destination.isBlank()) {
+                add(ValidationError("$path.destination", "navigate action requires destination"))
+            }
+            is OpenUrlAction -> if (action.url.isBlank()) {
+                add(ValidationError("$path.url", "open_url action requires url"))
+            }
+            is ShowSnackbarAction -> if (action.message.isBlank()) {
+                add(ValidationError("$path.message", "show_snackbar action requires message"))
+            }
+            is TrackAnalyticsAction -> if (action.eventName.isBlank()) {
+                add(ValidationError("$path.eventName", "track_analytics action requires eventName"))
+            }
+            is UnknownAction -> add(ValidationError("$path.type", action.reason))
         }
     }
 }

@@ -5,6 +5,7 @@ import com.gagandeep.dynamicuistudio.core.dynamicui.model.UiWidget
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.ButtonWidgetRenderer
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.CardWidgetRenderer
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.DividerWidgetRenderer
+import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.HeroBannerWidgetRenderer
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.ListWidgetRenderer
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.SpacerWidgetRenderer
 import com.gagandeep.dynamicuistudio.feature.renderer.rendering.widget.TextWidgetRenderer
@@ -33,6 +34,7 @@ fun defaultWidgetRendererRegistry(): WidgetRendererRegistry {
         renderers = listOf(
             TextWidgetRenderer(),
             ButtonWidgetRenderer(),
+            HeroBannerWidgetRenderer(),
             CardWidgetRenderer { widget, context -> registry.RenderWidget(widget, context) },
             ListWidgetRenderer(),
             SpacerWidgetRenderer(),

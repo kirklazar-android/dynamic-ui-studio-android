@@ -1,61 +1,63 @@
 {
-  "screenId": "credit_card_onboarding",
-  "title": "Credit Card Onboarding",
+  "screenId": "home",
+  "title": "DynamicUI Studio",
   "version": 1,
   "analytics": {
-    "screenView": "cc_onboarding_viewed"
+    "screenView": "home_v1"
   },
   "layout": {
     "type": "vertical",
     "padding": 20,
     "widgets": [
       {
-        "id": "hero_title",
-        "type": "text",
-        "text": "Get your new credit card in minutes",
-        "style": "headlineLarge"
+        "id": "hero_1",
+        "type": "hero_banner",
+        "title": "Welcome Back",
+        "subtitle": "Your dashboard is rendered from a JSON contract at runtime.",
+        "actionText": "View details",
+        "action": {
+          "type": "show_snackbar",
+          "message": "Hero action clicked"
+        }
       },
       {
-        "id": "hero_card",
+        "id": "text_1",
+        "type": "text",
+        "text": "This screen is composed dynamically using schema models, validation, and a Compose widget registry.",
+        "style": "body"
+      },
+      {
+        "id": "capabilities_card",
         "type": "card",
         "children": [
           {
-            "id": "hero_subtitle",
+            "id": "capabilities_title",
             "type": "text",
-            "text": "This screen is rendered from a JSON schema at runtime.",
-            "style": "body"
-          },
-          {
-            "id": "eligibility_title",
-            "type": "text",
-            "text": "Eligibility",
+            "text": "Current renderer capabilities",
             "style": "title"
           },
           {
-            "id": "eligibility_list",
+            "id": "capabilities_list",
             "type": "list",
             "items": [
-              "Age above 21",
-              "Valid PAN card",
-              "Stable monthly income"
+              "Schema parsing",
+              "Widget registry rendering",
+              "Dynamic action handling",
+              "Validation before rendering"
             ]
           }
         ]
       },
       {
-        "id": "divider_1",
-        "type": "divider"
-      },
-      {
-        "id": "apply_cta",
+        "id": "button_1",
         "type": "button",
-        "text": "Apply Now",
+        "text": "Continue",
         "analytics": {
-          "click": "cc_apply_clicked"
+          "click": "home_continue_clicked"
         },
         "action": {
           "type": "show_snackbar",
-          "message": "Application flow will be connected next"
+          "message": "CTA clicked"
         }
       }
     ]

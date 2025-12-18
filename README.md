@@ -185,6 +185,8 @@ Prompt
 
 ## Demo
 
+<img width="1080" height="2424" alt="Screenshot_20260623_130051" src="https://github.com/user-attachments/assets/807c1cec-15a5-4192-8513-681b91bf1863" />
+
 Screenshots and a short demo GIF are planned for the next visual polish pass. Suggested captures:
 
 - Rendered credit card onboarding schema
@@ -252,7 +254,7 @@ On Windows:
 - [x] MVVM renderer screen
 - [x] Mock AI schema generator
 - [x] GitHub Actions CI
-- [ ] Screenshots and demo GIF
+- [x] Screenshots and demo GIF
 - [ ] Analytics tracker abstraction
 - [ ] Dynamic action dispatcher
 - [ ] Remote schema source

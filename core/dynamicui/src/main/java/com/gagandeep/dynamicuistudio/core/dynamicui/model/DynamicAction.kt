@@ -6,19 +6,41 @@ sealed interface DynamicAction {
 
 data class NavigateAction(
     val destination: String,
-    override val type: String = "navigate"
-) : DynamicAction
+    override val type: String = TYPE
+) : DynamicAction {
+    companion object {
+        const val TYPE = "navigate"
+    }
+}
 
 data class OpenUrlAction(
     val url: String,
-    override val type: String = "open_url"
-) : DynamicAction
+    override val type: String = TYPE
+) : DynamicAction {
+    companion object {
+        const val TYPE = "open_url"
+    }
+}
 
-data class SnackbarAction(
+data class ShowSnackbarAction(
     val message: String,
-    override val type: String = "snackbar"
-) : DynamicAction
+    override val type: String = TYPE
+) : DynamicAction {
+    companion object {
+        const val TYPE = "show_snackbar"
+    }
+}
+
+data class TrackAnalyticsAction(
+    val eventName: String,
+    override val type: String = TYPE
+) : DynamicAction {
+    companion object {
+        const val TYPE = "track_analytics"
+    }
+}
 
 data class UnknownAction(
-    override val type: String
+    override val type: String,
+    val reason: String = "Unsupported action type"
 ) : DynamicAction

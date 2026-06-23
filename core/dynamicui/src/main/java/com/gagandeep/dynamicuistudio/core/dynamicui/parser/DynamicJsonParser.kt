@@ -7,6 +7,7 @@ import com.gagandeep.dynamicuistudio.core.dynamicui.model.DividerWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicAction
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicLayout
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.DynamicScreenSchema
+import com.gagandeep.dynamicuistudio.core.dynamicui.model.HeroBannerWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.LayoutType
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.ListWidget
 import com.gagandeep.dynamicuistudio.core.dynamicui.model.NavigateAction
@@ -73,6 +74,14 @@ class DynamicJsonParser(
                 action = widget.objectOrNull("action")?.let(::parseAction),
                 analytics = analytics
             )
+            HeroBannerWidget.TYPE -> HeroBannerWidget(
+                id = id,
+                title = widget.stringOrNull("title").orEmpty(),
+                subtitle = widget.stringOrNull("subtitle"),
+                actionText = widget.stringOrNull("actionText") ?: "View details",
+                action = widget.objectOrNull("action")?.let(::parseAction),
+                analytics = analytics
+            )
             CardWidget.TYPE -> CardWidget(
                 id = id,
                 children = widget.arrayOrNull("children")?.map(::parseWidget).orEmpty(),
@@ -106,6 +115,7 @@ class DynamicJsonParser(
             NavigateAction.TYPE -> NavigateAction(destination = action.stringOrNull("destination").orEmpty())
             OpenUrlAction.TYPE -> OpenUrlAction(url = action.stringOrNull("url").orEmpty())
             ShowSnackbarAction.TYPE -> ShowSnackbarAction(message = action.stringOrNull("message").orEmpty())
+            "snackbar" -> ShowSnackbarAction(message = action.stringOrNull("message").orEmpty())
             TrackAnalyticsAction.TYPE -> TrackAnalyticsAction(eventName = action.stringOrNull("eventName").orEmpty())
             else -> UnknownAction(type = type.ifBlank { "unknown" })
         }

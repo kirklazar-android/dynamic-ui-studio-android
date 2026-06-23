@@ -112,6 +112,7 @@ The bundled sample lives at `app/src/main/assets/screens/home.json`.
 |---|---|---|
 | Text | Supported | Headline, title, body, caption styles |
 | Button | Supported | Can dispatch dynamic actions |
+| Hero Banner | Supported | Prominent card-style hero with title, subtitle, and action |
 | Card | Supported | Supports nested widgets |
 | List | Supported | Renders simple text lists |
 | Spacer | Supported | Schema-controlled vertical spacing |

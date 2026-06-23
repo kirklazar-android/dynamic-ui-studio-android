@@ -30,6 +30,20 @@ data class ButtonWidget(
     }
 }
 
+data class HeroBannerWidget(
+    override val id: String,
+    val title: String,
+    val subtitle: String? = null,
+    val actionText: String = "View details",
+    val action: DynamicAction? = null,
+    override val analytics: AnalyticsSpec? = null,
+    override val type: String = TYPE
+) : UiWidget {
+    companion object {
+        const val TYPE = "hero_banner"
+    }
+}
+
 data class CardWidget(
     override val id: String,
     val children: List<UiWidget>,

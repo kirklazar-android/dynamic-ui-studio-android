@@ -1,0 +1,36 @@
+name: Android CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dynamic_ui_studio_dev
+  push:
+    branches:
+      - main
+      - dynamic_ui_studio_dev
+
+jobs:
+  build:
+    name: Test and assemble debug
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug --no-daemon
